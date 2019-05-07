@@ -1,5 +1,6 @@
 # CHKP-AWS_ASG
-Deploys a Check Point ASG using Terraform with VMSS in both North (inbound) hub.
+Deploys a Check Point ASG using Terraform in North (inbound) hub.
+Deploys web servers in spoke.
 
 Needs:
 - terraform installed
