@@ -10,11 +10,11 @@ aws_webserver1_subnet_cidr = "10.30.10.0/24"
 aws_webserver2_subnet_cidr = "10.30.20.0/24"
 cg_size = "c4.large"
 ws_size = "t2.micro"
-r53zone = "mycloudguard.net."
+r53zone = "domain.net."
 externaldnshost = "siac-demo"
-SICKey = "vpn12345"
+SICKey = ""
 AllowUploadDownload = "true"
-pwd_hash = "$1$BBROBBBB$3PnqP2zapsWO.mrkGbqGQ1"
+pwd_hash = ""
 
 my_user_data = <<-EOF
                 #!/bin/bash
