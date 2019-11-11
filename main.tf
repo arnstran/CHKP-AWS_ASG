@@ -20,43 +20,27 @@ resource "aws_route" "internet_access" {
   gateway_id             = "${aws_internet_gateway.default.id}"
 }
 
-# Define an external subnet for the security layer facing internet in the primary availability zone
-resource "aws_subnet" "external1" {
-  vpc_id                  = "${aws_vpc.default.id}"
-  cidr_block              = "${var.aws_external1_subnet_cidr}"
-  map_public_ip_on_launch = true
-  availability_zone       = "${var.primary_az}"
+# Define external subnets for the security layer facing internet in availability zones
+resource "aws_subnet" "inbound_external_subnet" {
+  count             = 2
+  availability_zone = "${data.aws_availability_zones.azs.names[count.index]}"
+  vpc_id            = "${aws_vpc.default.id}"
+  cidr_block        = "${cidrsubnet(var.aws_vpc_cidr, 8, count.index+100 )}"
+  
   tags {
-    Name = "Terraform_external1"
+    Name = "Inbound-External-${count.index+1}"
   }
 }
 
-# Define an external subnet for the security layer facing internet in the secondary availability zone
-resource "aws_subnet" "external2" {
-  vpc_id                  = "${aws_vpc.default.id}"
-  cidr_block              = "${var.aws_external2_subnet_cidr}"
-  map_public_ip_on_launch = true
-  availability_zone       = "${var.secondary_az}"
-  tags {
-    Name = "Terraform_external2"
-  }
-}
 # Define a subnet for the web servers in the primary availability zone
-resource "aws_subnet" "web1" {
-  vpc_id                  = "${aws_vpc.default.id}"
-  cidr_block              = "${var.aws_webserver1_subnet_cidr}"
-  availability_zone       = "${var.primary_az}"
+resource "aws_subnet" "inbound_internal_subnet" {
+  count             = 2
+  availability_zone = "${data.aws_availability_zones.azs.names[count.index]}"
+  vpc_id            = "${aws_vpc.default.id}"
+  cidr_block        = "${cidrsubnet(var.aws_vpc_cidr, 8, count.index+200 )}"
+  
   tags {
-    Name = "Terraform_web1"
-  }
-}
-# Define a subnet for the web servers in the secondary availability zone
-resource "aws_subnet" "web2" {
-  vpc_id                  = "${aws_vpc.default.id}"
-  cidr_block              = "${var.aws_webserver2_subnet_cidr}"
-  availability_zone       = "${var.secondary_az}"
-  tags {
-    Name = "Terraform_web2"
+    Name = "Inbound-Internal-${count.index+1}"
   }
 }
 
@@ -74,7 +58,7 @@ resource "aws_security_group" "elb" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # outbound internet access
+# outbound internet access
   egress {
     from_port   = 0
     to_port     = 0
@@ -128,7 +112,7 @@ resource "aws_launch_configuration" "web_conf" {
 resource "aws_elb" "sgw" {
   name = "terraform-external-elb"
 
-  subnets         = ["${aws_subnet.external1.id}","${aws_subnet.external2.id}"]
+  subnets         = ["${aws_subnet.inbound_external_subnet.*.id}"]
   security_groups = ["${aws_security_group.permissive.id}"]
 
   listener {
@@ -152,7 +136,8 @@ resource "aws_autoscaling_group" "sgw_asg" {
   max_size = 4
   min_size = 2
   load_balancers = ["${aws_elb.sgw.id}"]
-  vpc_zone_identifier = ["${aws_subnet.external1.id}","${aws_subnet.external2.id}"]
+  vpc_zone_identifier = ["${aws_subnet.inbound_external_subnet.*.id}"]
+
   tag {
       key = "Name"
       value = "CHKP-AutoScale"
@@ -160,7 +145,7 @@ resource "aws_autoscaling_group" "sgw_asg" {
   }
   tag {
       key = "x-chkp-tags"
-      value = "management=management-server:template=Inbound-ASG-configuration"
+      value = "management=${var.management_server_name}:template=${var.template_name}"
       propagate_at_launch = true
   }
 
@@ -174,7 +159,7 @@ resource "aws_autoscaling_group" "web_asg" {
   min_size = 2
   health_check_grace_period = 5
   load_balancers = ["${aws_elb.web.id}"]
-  vpc_zone_identifier = ["${aws_subnet.web1.id}","${aws_subnet.web2.id}"]
+  vpc_zone_identifier = ["${aws_subnet.inbound_internal_subnet.*.id}"]
   tag {
       key = "Name"
       value = "web-AutoScale"
@@ -189,10 +174,10 @@ resource "aws_autoscaling_group" "web_asg" {
 resource "aws_elb" "web" {
   name = "terraform-web-elb"
 
-  subnets         = ["${aws_subnet.web1.id}","${aws_subnet.web2.id}"]
+  subnets         = ["${aws_subnet.inbound_internal_subnet.*.id}"]
   security_groups = ["${aws_security_group.permissive.id}"]
   tags {
-    x-chkp-tags = "management=management-server:template=Inbound-ASG-configuration"
+    x-chkp-tags = "management=${var.management_server_name}:template=${var.template_name}"
   }            
 
   listener {
@@ -201,9 +186,20 @@ resource "aws_elb" "web" {
     lb_port           = 8090
     lb_protocol       = "http"
   }
+  health_check {
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    timeout             = 3
+    target              = "TCP:80"
+    interval            = 5
+  }
 }
 
 resource "aws_key_pair" "auth" {
   key_name   = "${var.key_name}"
   public_key = "${file(var.public_key_path)}"
+}
+
+output "ext_lb_dns" {
+  value = "${aws_elb.sgw.dns_name}"
 }

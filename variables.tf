@@ -7,18 +7,13 @@ Example: ~/.ssh/terraform.pub
 DESCRIPTION
 }
 
+variable "aws_region" {
+  description = "AWS region to launch servers."
+}
 variable "key_name" {
   description = "Desired name of AWS key pair"
 }
 variable "aws_vpc_cidr" {
-}
-variable "aws_external1_subnet_cidr" {
-}
-variable "aws_external2_subnet_cidr" {
-}
-variable "aws_webserver1_subnet_cidr" {
-}
-variable "aws_webserver2_subnet_cidr" {
 }
 variable "my_user_data" {
 }
@@ -38,25 +33,21 @@ variable "AllowUploadDownload" {
 }
 variable "pwd_hash" {
 }
+variable "management_server_name" {
+  description = "The management server used in CME (autoprov_cfg)"
+}
+variable "template_name" {
+  description = "The template used in CME (autoprov_cfg)"
+}
 
-variable "aws_region" {
-  description = "AWS region to launch servers."
-  default     = "eu-central-1"
-}
-variable "primary_az" {
-  description = "primary AZ"
-  default     = "eu-central-1a"
-}
-variable "secondary_az" {
-  description = "secondary AZ"
-  default     = "eu-central-1b"
-}
+data "aws_availability_zones" "azs" {}
+
 # Check Point R80 BYOL
 data "aws_ami" "chkp_ami" {
   most_recent      = true
   filter {
     name   = "name"
-    values = ["Check Point CloudGuard IaaS GW BYOL R80.10-*"]
+    values = ["Check Point CloudGuard IaaS GW BYOL R80.30-*"]
   }
   owners = ["679593333241"]
 }
