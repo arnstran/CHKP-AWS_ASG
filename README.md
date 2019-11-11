@@ -19,9 +19,12 @@ Notes:
 - Tested with terraform version 0.11
 
 Run:
-put the files in a directory on your host (download or git clone) and fron that directory run:
+put the files in a directory on your host (download or git clone) and from that directory run:
+
 'terraform init'
+
 'terraform plan' (optional)
+
 'terrafrom apply'
 
 Known issues:
