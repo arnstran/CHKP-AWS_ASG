@@ -16,7 +16,7 @@ Needs:
 
 Notes:
 - Management server communicate with gateways over public IPs
-- Tested with terraform version 0.11
+- Tested with terraform version 0.11 (0.12 probably needs 'terraform 0.12upgrade')
 
 Run:
 Before you run the templates, terraform.tfvars needs to be updated. At least SICKey, pwd_hash and public_key_path. 
@@ -29,10 +29,10 @@ Put the files in a directory (download or git clone) on your host (the host wher
 - 'terraform apply'
 
 
-Testing: When the deployment finishes, it prints the web app DNS name. Web app on port 80 and 8080.
+Testing: When the deployment finishes, it prints the web app DNS name.
 
 - When the deployment finished it still takes a few minutes for all the Check Point autoprovison to finish.
-- Test published web apps by browsing to web app DNS name.
+- Test published web apps by browsing to web app DNS name. Web app on port 80 and 8080.
 - Verify logs in SmartConsole
 
 
