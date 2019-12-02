@@ -1,7 +1,7 @@
 # CHKP-AWS_ASG
 Deploys a Check Point ASG using Terraform in North (inbound) hub.
-Deploys both external and internal load balancer.
-Deploys web servers in internal subnet.
+Deploys both external load balancer.
+Deploys web servers in internal subnet behind an internal load balancer.
 
 Needs:
 - terraform installed
