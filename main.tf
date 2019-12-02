@@ -58,6 +58,13 @@ resource "aws_security_group" "elb" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  ingress {
+    from_port   = 8080
+    to_port     = 8080
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
 # outbound internet access
   egress {
     from_port   = 0
@@ -97,8 +104,16 @@ resource "aws_launch_configuration" "sgw_conf" {
   instance_type = "${var.cg_size}" 
   key_name      = "${aws_key_pair.auth.id}"
   security_groups = ["${aws_security_group.permissive.id}"]
-  user_data     = "${var.my_user_data}"
+#  user_data     = "${var.my_user_data}"
   associate_public_ip_address = true
+  user_data     = <<-EOF
+                #!/bin/bash
+                clish -c 'set user admin shell /bin/bash' -s
+                blink_config -s 'gateway_cluster_member=false&ftw_sic_key=${var.SICKey}&upload_info=true&download_info=true&admin_hash="${var.pwd_hash}"'
+                addr="$(ip addr show dev eth0 | awk "/inet/{print \$2; exit}" | cut -d / -f 1)"
+                dynamic_objects -n LocalGateway -r "$addr" "$addr" -a
+                EOF
+
 }
 resource "aws_launch_configuration" "web_conf" {
   name          = "web_config"
@@ -119,6 +134,12 @@ resource "aws_elb" "sgw" {
     instance_port     = 8090
     instance_protocol = "http"
     lb_port           = 80
+    lb_protocol       = "http"
+  }
+  listener {
+    instance_port     = 8091
+    instance_protocol = "http"
+    lb_port           = 8080
     lb_protocol       = "http"
   }
   health_check {
@@ -186,6 +207,12 @@ resource "aws_elb" "web" {
     lb_port           = 8090
     lb_protocol       = "http"
   }
+  listener {
+    instance_port     = 3000
+    instance_protocol = "http"
+    lb_port           = 8091
+    lb_protocol       = "http"
+  }
   health_check {
     healthy_threshold   = 2
     unhealthy_threshold = 2
@@ -203,3 +230,18 @@ resource "aws_key_pair" "auth" {
 output "ext_lb_dns" {
   value = "${aws_elb.sgw.dns_name}"
 }
+
+//data "aws_route53_zone" "selected" {
+//  name         = "mycloudguard.net."
+//}
+
+//resource "aws_route53_record" "iac-demo" {
+//  zone_id = "${data.aws_route53_zone.selected.zone_id}"
+//  name    = "${var.externaldnshost}.${var.r53zone}"
+//  type    = "A"
+//  alias {
+//    name                   = "${aws_elb.sgw.dns_name}"
+//    zone_id                = "${aws_elb.sgw.zone_id}"
+//    evaluate_target_health = true
+//  }
+//}

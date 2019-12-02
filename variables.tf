@@ -15,8 +15,16 @@ variable "key_name" {
 }
 variable "aws_vpc_cidr" {
 }
-variable "my_user_data" {
-}
+//variable "aws_external1_subnet_cidr" {
+//}
+//variable "aws_external2_subnet_cidr" {
+//}
+//variable "aws_webserver1_subnet_cidr" {
+//}
+//variable "aws_webserver2_subnet_cidr" {
+//}
+//variable "my_user_data" {
+//}
 variable "ubuntu_user_data" {
 }
 variable "externaldnshost" {
@@ -39,6 +47,15 @@ variable "management_server_name" {
 variable "template_name" {
   description = "The template used in CME (autoprov_cfg)"
 }
+
+//variable "primary_az" {
+//  description = "primary AZ"
+//  default     = "eu-central-1a"
+//}
+//variable "secondary_az" {
+//  description = "secondary AZ"
+//  default     = "eu-central-1b"
+//}
 
 data "aws_availability_zones" "azs" {}
 
