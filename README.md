@@ -29,7 +29,7 @@ Put the files in a directory (download or git clone) on your host (the host wher
 - 'terraform apply'
 
 
-Testing: When the deployment finishes, it prints the web app DNS name.
+Testing: When the deployment finishes, it prints the web app DNS name. Web app on port 80 and 8080.
 
 - When the deployment finished it still takes a few minutes for all the Check Point autoprovison to finish.
 - Test published web apps by browsing to web app DNS name.
